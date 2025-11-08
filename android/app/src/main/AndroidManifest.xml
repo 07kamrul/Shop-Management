@@ -1,32 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.shop_management">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Internet Permission -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Network State Permission -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Camera Permission for Barcode Scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Storage Permissions for Export -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"
         tools:replace="android:maxSdkVersion" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"
         tools:replace="android:maxSdkVersion" />
-
-    <!-- For Android 13+ (API 33+) use new photo picker -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-
-    <!-- Flashlight Permission -->
     <uses-permission android:name="android.permission.FLASHLIGHT" />
-
-    <!-- Camera Features -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
@@ -53,8 +41,7 @@
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme"
-                />
+                android:resource="@style/NormalTheme" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -65,7 +52,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Only include if you actually have this service -->
         <service
             android:name=".java.MyFirebaseMessagingService"
             android:exported="false">
