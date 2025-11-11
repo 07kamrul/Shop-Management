@@ -45,35 +45,52 @@ class DashboardPage extends StatelessWidget {
                 ),
               ],
             ),
-            body: BlocBuilder<SaleBloc, SaleState>(
-              builder: (context, saleState) {
-                return BlocBuilder<ProductBloc, ProductState>(
-                  builder: (context, productState) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Welcome Section
-                          _buildWelcomeSection(user),
-                          const SizedBox(height: 20),
+            body: SafeArea(
+              child: BlocBuilder<SaleBloc, SaleState>(
+                builder: (context, saleState) {
+                  return BlocBuilder<ProductBloc, ProductState>(
+                    builder: (context, productState) {
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Welcome Section
+                                _buildWelcomeSection(user),
+                                const SizedBox(height: 20),
 
-                          // Stats Grid
-                          _buildStatsGrid(context, saleState, productState),
-                          const SizedBox(height: 20),
+                                // Stats Grid - Fixed height
+                                SizedBox(
+                                  height: 200,
+                                  child: _buildStatsGrid(
+                                    context,
+                                    saleState,
+                                    productState,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
 
-                          // Quick Actions
-                          const QuickActions(),
-                          const SizedBox(height: 20),
+                                // Quick Actions
+                                const QuickActions(),
+                                const SizedBox(height: 20),
 
-                          // Recent Activity
-                          _buildRecentActivity(context, saleState),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
+                                // Recent Activity Section
+                                _buildRecentActivitySection(
+                                  context,
+                                  saleState,
+                                  constraints,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
         );
@@ -87,22 +104,28 @@ class DashboardPage extends StatelessWidget {
       children: [
         Text(
           'Welcome back, ${user.name}!',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Here\'s your shop overview',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildStatsGrid(
-    BuildContext context,
-    SaleState saleState,
-    ProductState productState,
-  ) {
+      BuildContext context,
+      SaleState saleState,
+      ProductState productState,
+      ) {
     int totalProducts = 0;
     int lowStockCount = 0;
     double todaySales = 0.0;
@@ -167,71 +190,125 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  double _calculateEstimatedProfit(double totalSales) {
-    // Simple estimation: Assume 25% profit margin
-    return totalSales * 0.25;
-  }
-
-  Widget _buildRecentActivity(BuildContext context, SaleState saleState) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Recent Sales',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildRecentActivitySection(
+      BuildContext context,
+      SaleState saleState,
+      BoxConstraints constraints,
+      ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Recent Sales',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _buildSalesList(saleState),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 400, // Fixed height for sales list
+          child: _buildSalesList(context, saleState),
+        ),
+      ],
     );
   }
 
-  Widget _buildSalesList(SaleState saleState) {
+  Widget _buildSalesList(BuildContext context, SaleState saleState) {
     if (saleState is SalesLoadInProgress) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (saleState is SalesLoadFailure) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
             Text(
-              'Failed to load sales',
+              'Loading sales...',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Colors.grey,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              saleState.error,
-              textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
 
-    if (saleState is SalesLoadSuccess) {
-      final sales = saleState.sales;
-      
-      if (sales.isEmpty) {
-        return const Center(
+    if (saleState is SalesLoadFailure) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.receipt, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
               Text(
+                'Failed to load sales',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                saleState.error,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<SaleBloc>().add(const LoadTodaySales());
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (saleState is SalesLoadSuccess) {
+      final sales = saleState.sales;
+
+      if (sales.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.receipt_long,
+                size: 80,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              const Text(
                 'No sales today',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Text(
+                  'Sales will appear here once you make transactions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[500],
+                  ),
+                ),
               ),
             ],
           ),
@@ -242,35 +319,84 @@ class DashboardPage extends StatelessWidget {
       final recentSales = sales.take(5).toList();
 
       return ListView.builder(
+        shrinkWrap: true,
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: recentSales.length,
         itemBuilder: (context, index) {
           final sale = recentSales[index];
 
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
+            elevation: 2,
             child: ListTile(
-              leading: const Icon(Icons.receipt, color: Colors.blue),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.receipt,
+                  color: Colors.blue[700],
+                  size: 20,
+                ),
+              ),
               title: Text(
                 sale.customerName ?? 'Walk-in Customer',
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${sale.itemCount} item${sale.itemCount == 1 ? '' : 's'}'),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${sale.itemCount} item${sale.itemCount == 1 ? '' : 's'} • ${_formatPaymentMethod(sale.paymentMethod)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Text(
                     _formatDate(sale.dateTime),
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
                   ),
                 ],
               ),
-              trailing: Text(
-                '₹${sale.totalAmount.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                  fontSize: 16,
-                ),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹${sale.totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Profit: ₹${sale.totalProfit.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -278,14 +404,49 @@ class DashboardPage extends StatelessWidget {
       );
     }
 
-    return const Center(child: Text('Load sales to see activity'));
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text(
+            'Loading...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _calculateEstimatedProfit(double totalSales) {
+    // Simple estimation: Assume 25% profit margin
+    return totalSales * 0.25;
+  }
+
+  String _formatPaymentMethod(String method) {
+    switch (method.toLowerCase()) {
+      case 'cash':
+        return 'Cash';
+      case 'card':
+        return 'Card';
+      case 'upi':
+        return 'UPI';
+      case 'online':
+        return 'Online';
+      default:
+        return method;
+    }
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final saleDay = DateTime(date.year, date.month, date.day);
-    
+
     if (saleDay == today) {
       return 'Today ${_formatTime(date)}';
     } else {

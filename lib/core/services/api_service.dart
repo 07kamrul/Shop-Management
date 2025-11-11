@@ -4,48 +4,82 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl =
-      'http://localhost:5033/api'; // Change to your API URL
-  static const int timeoutSeconds = 30;
+  static const String baseUrl = 'http://10.0.2.2:7097/api';
+  static const int timeoutSeconds = 15; // Reduced from 30 to 15 seconds
 
   // Get headers with authentication
   static Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
 
-    final headers = {'Content-Type': 'application/json'};
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
 
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      return headers;
+    } catch (e) {
+      return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
     }
-
-    return headers;
   }
 
   // Handle API response
   static dynamic _handleResponse(http.Response response) {
-    final responseBody = json.decode(utf8.decode(response.bodyBytes));
+    final String responseBodyString = utf8.decode(response.bodyBytes);
+
+    if (responseBodyString.isEmpty) {
+      throw ApiException(
+        message: 'Empty response from server',
+        statusCode: response.statusCode,
+      );
+    }
+
+    final dynamic responseBody;
+    try {
+      responseBody = json.decode(responseBodyString);
+    } catch (e) {
+      throw ApiException(
+        message: 'Invalid JSON response: $e',
+        statusCode: response.statusCode,
+      );
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return responseBody;
     } else {
       throw ApiException(
-        message: responseBody['message'] ?? 'An error occurred',
+        message: responseBody['message']?.toString() ??
+            responseBody['error']?.toString() ??
+            'HTTP ${response.statusCode}',
         statusCode: response.statusCode,
+        responseData: responseBody,
       );
     }
   }
 
-  // Generic GET request - FIXED: Added queryParams as named parameter
+  // Generic GET request
   static Future<dynamic> get(
-    String endpoint, {
-    Map<String, dynamic>? queryParams,
-  }) async {
+      String endpoint, {
+        Map<String, dynamic>? queryParams,
+      }) async {
     try {
       final headers = await _getHeaders();
-      final uri = Uri.parse(
-        '$baseUrl$endpoint',
-      ).replace(queryParameters: queryParams);
+      Uri uri = Uri.parse('$baseUrl$endpoint');
+
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams.map((key, value) =>
+            MapEntry(key, value.toString())));
+      }
+
+      print('API GET: $uri'); // Debug log
 
       final response = await http
           .get(uri, headers: headers)
@@ -53,11 +87,11 @@ class ApiService {
 
       return _handleResponse(response);
     } on SocketException {
-      throw ApiException(message: 'No internet connection', statusCode: 0);
-    } on http.ClientException {
-      throw ApiException(message: 'Server connection failed', statusCode: 0);
+      throw ApiException(message: 'No internet connection. Please check your network.', statusCode: 0);
+    } on http.ClientException catch (e) {
+      throw ApiException(message: 'Server connection failed: $e', statusCode: 0);
     } catch (e) {
-      throw ApiException(message: e.toString(), statusCode: 0);
+      throw ApiException(message: 'Network error: $e', statusCode: 0);
     }
   }
 
@@ -67,17 +101,24 @@ class ApiService {
       final headers = await _getHeaders();
       final uri = Uri.parse('$baseUrl$endpoint');
 
+      print('API POST: $uri'); // Debug log
+      print('API Data: $data'); // Debug log
+
       final response = await http
-          .post(uri, headers: headers, body: json.encode(data))
+          .post(
+        uri,
+        headers: headers,
+        body: json.encode(data),
+      )
           .timeout(const Duration(seconds: timeoutSeconds));
 
       return _handleResponse(response);
     } on SocketException {
-      throw ApiException(message: 'No internet connection', statusCode: 0);
-    } on http.ClientException {
-      throw ApiException(message: 'Server connection failed', statusCode: 0);
+      throw ApiException(message: 'No internet connection. Please check your network.', statusCode: 0);
+    } on http.ClientException catch (e) {
+      throw ApiException(message: 'Server connection failed: $e', statusCode: 0);
     } catch (e) {
-      throw ApiException(message: e.toString(), statusCode: 0);
+      throw ApiException(message: 'Network error: $e', statusCode: 0);
     }
   }
 
@@ -93,11 +134,11 @@ class ApiService {
 
       return _handleResponse(response);
     } on SocketException {
-      throw ApiException(message: 'No internet connection', statusCode: 0);
-    } on http.ClientException {
-      throw ApiException(message: 'Server connection failed', statusCode: 0);
+      throw ApiException(message: 'No internet connection. Please check your network.', statusCode: 0);
+    } on http.ClientException catch (e) {
+      throw ApiException(message: 'Server connection failed: $e', statusCode: 0);
     } catch (e) {
-      throw ApiException(message: e.toString(), statusCode: 0);
+      throw ApiException(message: 'Network error: $e', statusCode: 0);
     }
   }
 
@@ -113,11 +154,11 @@ class ApiService {
 
       return _handleResponse(response);
     } on SocketException {
-      throw ApiException(message: 'No internet connection', statusCode: 0);
-    } on http.ClientException {
-      throw ApiException(message: 'Server connection failed', statusCode: 0);
+      throw ApiException(message: 'No internet connection. Please check your network.', statusCode: 0);
+    } on http.ClientException catch (e) {
+      throw ApiException(message: 'Server connection failed: $e', statusCode: 0);
     } catch (e) {
-      throw ApiException(message: e.toString(), statusCode: 0);
+      throw ApiException(message: 'Network error: $e', statusCode: 0);
     }
   }
 }
@@ -125,8 +166,13 @@ class ApiService {
 class ApiException implements Exception {
   final String message;
   final int statusCode;
+  final dynamic responseData;
 
-  ApiException({required this.message, required this.statusCode});
+  ApiException({
+    required this.message,
+    required this.statusCode,
+    this.responseData,
+  });
 
   @override
   String toString() => 'ApiException: $message (Status: $statusCode)';

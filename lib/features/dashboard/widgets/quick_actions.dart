@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shop_management/features/categories/pages/categories_list_page.dart';
+import 'package:shop_management/features/products/pages/add_product_page.dart';
+import 'package:shop_management/features/reports/page/reports_page.dart';
 
 import '../../analytics/pages/advanced_analytics_page.dart';
 import '../../customers/pages/customers_list_page.dart';
+import '../../sales/pages/create_sale_page.dart';
 import '../../suppliers/pages/suppliers_list_page.dart';
 
 class QuickActions extends StatelessWidget {
@@ -29,48 +33,54 @@ class QuickActions extends StatelessWidget {
               label: 'Add Product',
               color: Colors.blue,
               onTap: () {
-                // Navigate to add product page
-              },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddProductPage(),
+                  ),
+                );              },
             ),
             _buildActionButton(
               icon: Icons.shopping_cart,
               label: 'New Sale',
               color: Colors.green,
               onTap: () {
-                // Navigate to create sale page
-              },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateSalePage(),
+                  ),
+                );              },
             ),
             _buildActionButton(
               icon: Icons.assessment,
               label: 'Reports',
               color: Colors.orange,
               onTap: () {
-                // Navigate to reports page
-              },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportsPage(),
+                  ),
+                );                },
             ),
-            _buildActionButton(
-              icon: Icons.inventory_2,
-              label: 'Inventory',
-              color: Colors.purple,
-              onTap: () {
-                // Navigate to inventory page
-              },
-            ),
+            // _buildActionButton(
+            //   icon: Icons.inventory_2,
+            //   label: 'Inventory',
+            //   color: Colors.purple,
+            //   onTap: () {},
+            // ),
             _buildActionButton(
               icon: Icons.category,
               label: 'Categories',
               color: Colors.red,
               onTap: () {
-                // Navigate to categories page
-              },
-            ),
-            _buildActionButton(
-              icon: Icons.people,
-              label: 'Customers',
-              color: Colors.teal,
-              onTap: () {
-                // Navigate to customers page
-              },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoriesListPage(),
+                  ),
+                );                },
             ),
             // Add these to the QuickActions grid in dashboard_page.dart
             _buildActionButton(
