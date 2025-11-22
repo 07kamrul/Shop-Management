@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shop_management/features/categories/pages/edit_category_page.dart';
 import '../../../../blocs/category/category_bloc.dart';
 import '../../../../data/models/category_model.dart';
 
@@ -53,10 +54,20 @@ class CategoryCard extends StatelessWidget {
                 ],
               ),
             ),
+            // Inside CategoryCard → edit button onPressed
             IconButton(
               icon: const Icon(Icons.edit, size: 20),
               onPressed: () {
-                // Navigate to edit category
+                // In your CategoryCard widget's edit button:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<CategoryBloc>(),
+                      child: EditCategoryPage(category: category),
+                    ),
+                  ),
+                );
               },
             ),
             IconButton(

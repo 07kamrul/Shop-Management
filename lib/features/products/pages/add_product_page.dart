@@ -207,7 +207,9 @@ class _AddProductPageState extends State<AddProductPage> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text('Save Product'),
@@ -275,7 +277,7 @@ class _AddProductPageState extends State<AddProductPage> {
               prefixIcon: Icon(Icons.category),
             ),
             items: _categories.map((category) {
-              final categoryId = category is Map<String, dynamic> 
+              final categoryId = category is Map<String, dynamic>
                   ? category['id'] ?? category['_id']
                   : category.id;
               final categoryName = category is Map<String, dynamic>
@@ -371,7 +373,6 @@ class _AddProductPageState extends State<AddProductPage> {
       };
 
       context.read<ProductBloc>().add(AddProduct(product: productData));
-
     } else if (_selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

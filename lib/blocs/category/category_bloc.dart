@@ -41,9 +41,6 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       );
 
       emit(CategoryOperationSuccess());
-      
-      // Reload categories after adding
-      add(LoadCategories());
     } catch (e) {
       emit(CategoryOperationFailure(error: e.toString()));
     }
@@ -64,9 +61,6 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       );
 
       emit(CategoryOperationSuccess());
-      
-      // Reload categories after updating
-      add(LoadCategories());
     } catch (e) {
       emit(CategoryOperationFailure(error: e.toString()));
     }
@@ -79,9 +73,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     emit(CategoryOperationInProgress());
     try {
       await CategoryService.deleteCategory(event.categoryId);
-      
+
       emit(CategoryOperationSuccess());
-      
+
       // Reload categories after deletion
       add(const LoadCategories());
     } catch (e) {

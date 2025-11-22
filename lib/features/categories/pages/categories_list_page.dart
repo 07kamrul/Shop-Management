@@ -6,11 +6,43 @@ import '../../../../data/models/category_model.dart';
 import '../widgets/category_card.dart';
 import 'add_category_page.dart';
 
-class CategoriesListPage extends StatelessWidget {
+class CategoriesListPage extends StatefulWidget {
   const CategoriesListPage({super.key});
+  @override
+  State<CategoriesListPage> createState() => _CategoriesListPageState();
+}
+
+class _CategoriesListPageState extends State<CategoriesListPage>
+    with AutomaticKeepAliveClientMixin, RouteAware {
+  late final CategoryBloc _categoryBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryBloc = CategoryBloc()..add(const LoadCategories());
+  }
+
+  @override
+  void dispose() {
+    _categoryBloc.close();
+    super.dispose();
+  }
+
+  // Reload categories whenever this page becomes visible
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Force reload when page becomes visible
+    _reloadCategories();
+  }
+
+  void _reloadCategories() {
+    _categoryBloc.add(const LoadCategories());
+  }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is! AuthAuthenticated) {
@@ -22,40 +54,37 @@ class CategoriesListPage extends StatelessWidget {
 
         final user = authState.user;
 
-        return BlocProvider(
-          create: (context) => CategoryBloc()..add(const LoadCategories()),
+        return BlocProvider.value(
+          value: _categoryBloc,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Categories'),
               actions: [
                 IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _reloadCategories,
+                  tooltip: 'Refresh',
+                ),
+                IconButton(
                   icon: const Icon(Icons.add),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AddCategoryPage(),
+                        builder: (context) => BlocProvider.value(
+                          value: _categoryBloc,
+                          child: const AddCategoryPage(),
+                        ),
                       ),
                     );
+                    // Reload after returning from add page
+                    _reloadCategories();
                   },
                 ),
               ],
             ),
             body: BlocConsumer<CategoryBloc, CategoryState>(
               listener: (context, state) {
-                // Handle success operations
-                if (state is CategoryOperationSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Operation completed successfully!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  
-                  // Reload categories after any operation
-                  context.read<CategoryBloc>().add(const LoadCategories());
-                }
-                
                 // Handle operation failures
                 if (state is CategoryOperationFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +96,7 @@ class CategoriesListPage extends StatelessWidget {
                 }
               },
               builder: (context, state) {
-                if (state is CategoriesLoadInProgress || 
+                if (state is CategoriesLoadInProgress ||
                     state is CategoryOperationInProgress) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -77,7 +106,11 @@ class CategoriesListPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Failed to load categories',
@@ -91,9 +124,7 @@ class CategoriesListPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () {
-                            context.read<CategoryBloc>().add(const LoadCategories());
-                          },
+                          onPressed: _reloadCategories,
                           child: const Text('Retry'),
                         ),
                       ],
@@ -103,7 +134,7 @@ class CategoriesListPage extends StatelessWidget {
 
                 if (state is CategoriesLoadSuccess) {
                   final categories = state.categories;
-                  
+
                   // Convert dynamic list to Category list
                   final categoryList = categories.map((data) {
                     if (data is Category) {
@@ -124,15 +155,24 @@ class CategoriesListPage extends StatelessWidget {
                       : _buildCategoriesList(categoryList);
                 }
 
-                return const Center(child: Text('Load categories to get started'));
+                return const Center(
+                  child: Text('Load categories to get started'),
+                );
               },
             ),
             floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddCategoryPage()),
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: _categoryBloc,
+                      child: const AddCategoryPage(),
+                    ),
+                  ),
                 );
+                // Reload after returning from add page
+                _reloadCategories();
               },
               child: const Icon(Icons.add),
             ),
@@ -173,4 +213,7 @@ class CategoriesListPage extends StatelessWidget {
       },
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
